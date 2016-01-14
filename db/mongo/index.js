@@ -1,5 +1,6 @@
 var poolModule = require('generic-pool');
 var mongodb = require('mongodb');
+var logger = require('appcan-logger')('[db][mongo][index]');
 var _ = require("underscore");
 _.mixin(require('underscore.deep'));
 var config = require('../../config').mongo;
@@ -48,7 +49,7 @@ mongo.createConnection = function (callback) {
       mongo.openConnection(db, callback);
       break;
     case 'cluster':
-      var mongos = new Mongos(ServerArray, options['mongos']);
+      var mongos = new Mongos(this.servers, options['mongos']);
       db = new Db(database, mongos, options['db']);
       mongo.openConnection(db, callback);
       break;
@@ -61,7 +62,7 @@ mongo.createConnection = function (callback) {
       var connString = 'mongodb://' + usernamePassword + config.hosts[0] + '/' + database;
       MongoClient.connect(connString, options, function (err, _db) {
         if (err) {
-          console.log(new Date().format("iso") + ' could not connect to your Mongo database. Mongo returned the following error : %s', err.message);
+          logger.debug(' could not connect to your Mongo database. Mongo returned the following error : %s', err.message);
           return callback(err, null);
         }
         _this.cache[database] = _db;
@@ -71,25 +72,20 @@ mongo.createConnection = function (callback) {
 
 };
 
-//打开数据库连接
+/**
+ * 打开数据库连接
+ * @param db,mongodb.Db的实例
+ * @param callback
+ */
 mongo.openConnection = function (db, callback) {
   callback = callbackHandler(callback, 'open a mongodb connection');
   var _this = this;
-  var options = config.options;
   var database = config.database;
   db.open(function (err, _db) {
     if (err) {
-      console.log(new Date().format("iso") + ' could not connect to your Mongo database. Mongo returned the following error : %s', err.message);
+      logger.debug(' could not connect to your Mongo database. Mongo returned the following error : %s', err.message);
+      return callback(err, null);
     }
-    _db.on('error', function (error) {
-      console.log(new Date().format("iso") + ' could not connect to your Mongo database. Mongo returned the following error : %s', err.message);
-    });
-    _db.on('close', function () {
-      console.log(new Date().format("iso") + ' Mongo already colse !');
-    });
-    _db.on('fullsetup', function () {
-      // console.log(new Date().format("iso") + ' Mongo already connect to server ! ');
-    });
     if (config.user && config.password) {
       _db.authenticate(config.user, config.password, function (err, result) {
         if (err || result === false) {
@@ -100,7 +96,7 @@ mongo.openConnection = function (db, callback) {
         }
       });
     } else {
-      _this.cache[mongo_defaultDb] = _db;
+      _this.cache[database] = _db;
       callback(null, _db);
     }
   });
@@ -116,7 +112,6 @@ mongo.openConnection = function (db, callback) {
 mongo.getConnect = function (dbName, callback) {
   callback = callbackHandler(callback, 'get a mongodb connection');
   var _this = this;
-  var options = config.options;
   var database = config.database;
   var _db = this.cache[dbName];
   if (_db != null && typeof _db === 'object') {
@@ -138,7 +133,7 @@ mongo.getConnect = function (dbName, callback) {
     // 连接池建立完后，使用该连接处理挂起的请求
     if (status) {
       status = false;
-      mongo.createConnection(function (err, db) {
+      _this.createConnection(function (err, db) {
         var _db_default = _this.cache[database] = db;
         for (var i = 0, len = stack.length; i < len; i++) {
           var temp = stack.shift();
@@ -152,13 +147,43 @@ mongo.getConnect = function (dbName, callback) {
   }
 };
 
+/**
+ * 监听数据库状态
+ * @param db
+ * @private
+ */
+mongo._shutdown = function (db) {
+  var dbName = db.databaseName;
+  var _this = this;
+  if (!_this.cache[dbName]) return;
+  db.on('error', function (error) {
+    delete _this.cache[dbName];
+    logger.debug(' could not connect to the [' + dbName + '] mongo database. Mongo returned the following error : %s', err.message);
+  });
+  db.on('close', function () {
+    delete _this.cache[dbName];
+    logger.debug('The [' + dbName + '] mongodb already colse !');
+  });
+  db.on('fullsetup', function () {
+  });
+};
+
 function callbackHandler(callback, msg) {
   if (typeof callback !== 'function') {
     callback = function () {
       if (msg) {
-        console.log(msg + ', did not set the callback function');
+        logger.debug(msg + ', did not set the callback function');
       }
     };
+  } else {
+    return function (err, db) {
+      if (!err) {
+        mongo._shutdown(db);
+      }
+      callback(err, db);
+    }
   }
   return callback;
 }
+
+mongo.db = require('./db');
