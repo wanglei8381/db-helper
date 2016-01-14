@@ -12,14 +12,28 @@ config.password = "";
  console.log('create a connection', _db.databaseName);
  });*/
 
-db.getCollection('testTable', function (err, user) {
-  user.find().toArray(function (err, docs) {
-    console.log('1111111111111111111111111111111', err, docs);
+db._store(function () {
+  db.getCollection('testTable2', function (err, user) {
+    user.find().toArray(function (err, docs) {
+      console.log('1111111111111111111111111111111', err, docs);
+    });
+  });
+
+  db.getCollection('testTable2', function (err, user) {
+    user.find().toArray(function (err, docs) {
+      console.log('222222222222222222222', err, docs);
+    });
   });
 });
 
-db.use('appcan').getCollection('user', function (err, user) {
-  user.find().toArray(function (err, docs) {
-    console.log('22222222222222222222222222222222', err, docs);
-  });
-});
+
+//db.use('appcan').getCollection('user', function (err, user) {
+//  user.find().toArray(function (err, docs) {
+//    console.log('22222222222222222222222222222222', err, docs);
+//  });
+//});
+
+/*
+ db.listCollections(function (err, docs) {
+ console.log('#########################', err, docs);
+ });*/
