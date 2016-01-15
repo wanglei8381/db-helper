@@ -50,7 +50,7 @@ proto.use = function (dbName, callback) {
 proto.getCollection = function (name) {
   var _this = this;
   var argus = arguments;
-  var cache = _this.cache[this.dbName];
+  var cache = _this.cache[_this.dbName];
   if (!cache) {
     _this.cache[this.dbName] = cache = {};
   }
@@ -109,6 +109,9 @@ proto._store = function (callback) {
     callback(err);
   });
 };
+
+//为db添加数据库操作能力
+require('./collection')(proto);
 
 function callbackHandler(callback, msg) {
   if (typeof callback !== 'function') {

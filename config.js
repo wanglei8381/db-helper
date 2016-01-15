@@ -1,10 +1,10 @@
 //mongodb配置
 exports.mongo = {
-  "type": "cluster",
+  "type": "defalut",
   "hosts": ["192.168.1.183:27017"],
   "database": "test",
-  "user": "admin",
-  "password": "admin",
+  "user": "",
+  "password": "",
   "options": {
     "server": {
       "poolSize": 10,
