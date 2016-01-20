@@ -32,3 +32,23 @@ exports.mongo = {
   "idle": 300,
   "log": false
 };
+
+//redis配置
+exports.redis = {
+  "type": "sentinel",
+  "name": "mymaster",
+  "hosts": ["redisSen1:26379", "redisSen2:26379", "redisSen3:26379"],
+  "options": {
+    "family": "4",
+    "db": 1,
+    "password": null,
+    "enableReadyCheck": true,
+    "enableOfflineQueue": true,
+    "connectTimeout": 1000,
+    "lazyConnect": false
+  },
+  "maxConn": 10,
+  "mixConn": 2,
+  "idle": 300,
+  "log": false
+};

@@ -1,3 +1,5 @@
+var logger = require('appcan-logger')('[db][mongo][collection]');
+
 module.exports = function (db) {
 
   /**
