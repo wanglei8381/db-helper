@@ -52,9 +52,9 @@ var ObjectId = require('mongodb').ObjectID;
  console.log(err, res);
  });*/
 
-db.updateOne('vote', {'_id': new ObjectId('5698a4983a43329806f16a58')}, {'userId': 'ZY8888'}, function (err, res) {
+/*db.updateOne('vote', {'_id': new ObjectId('5698a4983a43329806f16a58')}, {'userId': 'ZY8888'}, function (err, res) {
   console.log(err, res.result);
-});
+});*/
 
 db.find('vote', {'_id': new ObjectId('5698a4983a43329806f16a58')}, function (err, res) {
   console.log(err, res);
